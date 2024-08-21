@@ -1,0 +1,66 @@
+###############################
+# BASE stage                  #
+# Minimal to install samtools #
+###############################
+
+FROM ubuntu:22.04 AS base
+
+# Install dependencies for samtools
+# For the installer script:
+# - curl: download files
+# For samtools:
+# - build-essential: for compiling source code (gcc, g++, make)
+# - autoconf, automake: for compiling source code
+# - zlib1g-dev, libbz2-dev, liblzma-dev: compression libraries for samtools
+# - libcurl4-openssl-dev: for curl dev features in samtools
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    autoconf \
+    automake \
+    curl \
+    zlib1g-dev \
+    libbz2-dev \
+    liblzma-dev \
+    libncurses5-dev \
+    libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+
+WORKDIR /opt
+WORKDIR /opt/install
+WORKDIR /opt/repo
+
+COPY install_samtools.sh install_samtools.sh
+# Build time argument for SAMTOOLS version - argument name can be anything
+ARG SAMTOOLS_VERSION="1.14"
+ARG INSTALL_DIR="/opt/install"
+
+# Actual installation of samtools (defaults to installing to /usr/local)
+RUN bash install_samtools.sh $SAMTOOLS_VERSION --install-dir $INSTALL_DIR
+
+# Set up environment variables needed for htslib to be found
+ENV PATH="${INSTALL_DIR:?}/bin:${PATH}"
+
+##############################
+# TEST stage only            #
+# Test samtools installation #
+##############################
+FROM base AS test
+
+# Create a non-root user
+ENV USER_NAME=testuser
+RUN useradd -m ${USER_NAME:?} 
+
+# Create test directory
+WORKDIR /opt/test
+
+# Copy test files
+COPY --chown=testuser:testuser ./tests/* /opt/test/
+
+# Make sure the test script is executable
+RUN chmod +x /opt/test/run_tests.sh && chown "${USER_NAME:?}:${USER_NAME:?}" -R .
+
+# Switch to the non-root user
+USER testuser
+
+CMD ["bash"]
