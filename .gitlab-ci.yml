@@ -48,7 +48,7 @@ include:
     # Test the image
     #
     - docker run --rm ${CANDIDATE_IMAGE:?} ls -l ${TEST_SAMTOOLS_FILE:?}
-    - docker run --rm ${CANDIDATE_IMAGE:?} bash ${TEST_SAMTOOLS_FILE:?} ${SAMTOOLS_VERSION:?}
+    - docker run --rm -t ${CANDIDATE_IMAGE:?} bash ${TEST_SAMTOOLS_FILE:?} ${SAMTOOLS_VERSION:?}
     # Check if EXPECTS_HTSLIB env-var exists within the container if not skip htlib tests
     - docker run --rm ${CANDIDATE_IMAGE:?} ls -l ${TEST_HTSLIB_FILE:?}
     - docker run --rm ${CANDIDATE_IMAGE:?} bash -c "if [[ -n \"\${EXPECTS_HTSLIB}\" ]]; then bash ${TEST_HTSLIB_FILE:?} ${HTSLIB_VERSION:?}; else echo 'Skipping htslib tests'; fi"
