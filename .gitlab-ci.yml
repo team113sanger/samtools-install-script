@@ -66,7 +66,8 @@ include:
     # From 1.13 to 1.20
     - BUILT_IMAGE="htslib"
     - HTSLIB_VERSION=""
-    - MULTIPLE_VERSIONS=(1.13 1.14 1.15.1 1.16 1.17 1.18 1.19 1.20)
+    - SAMTOOLS_VERSION=""
+    - MULTIPLE_VERSIONS=(1.10 1.11 1.12 1.13 1.14 1.15.1 1.16 1.17 1.18 1.19 1.20)
     - echo "Multiple versions to build and test ${MULTIPLE_VERSIONS[@]}"
     #
     - test -f ${DOCKERFILE_PATH:?}
@@ -76,8 +77,8 @@ include:
     #
     - |2
       echo "Building the image for each version"
-      for HTSLIB_VERSION in ${MULTIPLE_VERSIONS[@]}; do
-        BUILD_CMD="docker build --target ${DOCKER_TARGET_STAGE:?} -t ${BUILT_IMAGE:?}:${HTSLIB_VERSION:?} -f ${DOCKERFILE_PATH:?} --build-arg HTSLIB_VERSION=${HTSLIB_VERSION:?} ${DOCKER_BUILD_CONTEXT:?}"
+      for SAMTOOLS_VERSION in ${MULTIPLE_VERSIONS[@]}; do
+        BUILD_CMD="docker build --target ${DOCKER_TARGET_STAGE:?} -t ${BUILT_IMAGE:?}:${SAMTOOLS_VERSION:?} -f ${DOCKERFILE_PATH:?} --build-arg HTSLIB_VERSION=${HTSLIB_VERSION:?} --build-arg SAMTOOLS_VERSION=${SAMTOOLS_VERSION:?} ${DOCKER_BUILD_CONTEXT:?}"
         # Print the build command in blue so it is easy to see in the long log
         echo ""
         echo ""
@@ -96,9 +97,10 @@ include:
         echo ""
         echo ""
         echo ""
-        echo -e "\033[0;35mTesting image ${BUILT_IMAGE:?}:${HTSLIB_VERSION:?}\033[0m"
-        docker run --rm ${BUILT_IMAGE:?}:${HTSLIB_VERSION:?} ls -l ${TEST_SAMTOOLS_FILE:?}
-        docker run --rm ${BUILT_IMAGE:?}:${HTSLIB_VERSION:?} bash ${TEST_SAMTOOLS_FILE:?} ${HTSLIB_VERSION:?}
+        echo -e "\033[0;35mTesting image ${BUILT_IMAGE:?}:${SAMTOOLS_VERSION:?}\033[0m"
+        docker run --rm ${BUILT_IMAGE:?}:${SAMTOOLS_VERSION:?} ls -l ${TEST_SAMTOOLS_FILE:?}
+        docker run --rm ${BUILT_IMAGE:?}:${SAMTOOLS_VERSION:?} bash ${TEST_SAMTOOLS_FILE:?} ${SAMTOOLS_VERSION:?}
+        docker run --rm ${BUILT_IMAGE:?}:${SAMTOOLS_VERSION:?} bash -c "if [[ -n \"\${EXPECTS_HTSLIB}\" ]]; then bash ${TEST_HTSLIB_FILE:?} ${HTSLIB_VERSION:?}; else echo 'Skipping htslib tests'; fi"
       done
     - echo "Build and test completed successfully"
 
@@ -213,15 +215,15 @@ test-one-python-custom:
     DOCKERFILE_PATH: docker/Dockerfile.python.custom
   extends:
     - .template_job__build_one_and_test
-# test-many-ubuntu22-usr_local:
-#   stage: test-many
-#   variables:
-#     PRE_FETCH_BASE_IMAGE: ubuntu:22.04
-#     IMAGE_TAG_SUFFIX: "-ubuntu22.usr_local"
-#     DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.usr_local
-#   extends:
-#     - .template_job__build_many_and_test
 
+test-many-ubuntu22-usr_local:
+  stage: test-many
+  variables:
+    PRE_FETCH_BASE_IMAGE: ubuntu:22.04
+    IMAGE_TAG_SUFFIX: "-ubuntu22.usr_local"
+    DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.usr_local
+  extends:
+    - .template_job__build_many_and_test
 # test-many-python-usr_local:
 #   stage: test-many
 #   variables:
