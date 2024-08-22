@@ -54,6 +54,7 @@ FROM base AS test
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Add environment variable for use in test script
@@ -70,7 +71,7 @@ WORKDIR /opt/test
 COPY --chown=testuser:testuser ./tests/* /opt/test/
 
 # Make sure the test script is executable
-RUN chmod +x /opt/test/run_tests.sh && chown "${USER_NAME:?}:${USER_NAME:?}" -R .
+RUN chmod +x *.sh && chown "${USER_NAME:?}:${USER_NAME:?}" -R .
 
 # Switch to the non-root user
 USER testuser

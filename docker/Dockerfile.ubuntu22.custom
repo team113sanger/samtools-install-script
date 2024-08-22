@@ -58,7 +58,7 @@ WORKDIR /opt/test
 COPY --chown=testuser:testuser ./tests/* /opt/test/
 
 # Make sure the test script is executable
-RUN chmod +x /opt/test/run_tests.sh && chown "${USER_NAME:?}:${USER_NAME:?}" -R .
+RUN chmod +x *.sh && chown "${USER_NAME:?}:${USER_NAME:?}" -R .
 
 # Switch to the non-root user
 USER testuser

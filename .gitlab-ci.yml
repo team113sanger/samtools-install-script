@@ -1,0 +1,241 @@
+stages:
+  - test-one
+  - test-many
+
+include:
+  - project: "team113sanger/common/cicd-template"
+    ref: 0.3.4 # Use the latest Git Tag or if experimenting with new components use a Git SHA
+    file: ".gitlab-ci-components.yml"
+
+#############
+# TEMPLATES #
+#############
+
+.generic-variables:
+  extends:
+    - .component-variables
+  variables:
+    USE_DOCKER_TARGET_STAGE: 1
+    DOCKER_BUILDKIT: 1
+    DOCKER_TARGET_STAGE: test
+    TEST_SAMTOOLS_FILE: run_tests_samtools.sh
+    TEST_HTSLIB_FILE: run_tests_htslib.sh
+    DOCKERFILE_PATH: "" # Must be set in the job definition
+    DOCKER_BUILD_CONTEXT: .
+    SAMTOOLS_VERSION: "1.14"
+    HTSLIB_VERSION: "1.14"
+
+.generic-script_build_once:
+  script:
+    - echo "Running a build and then test for the image"
+    #
+    - echo "DOCKERFILE_PATH=${DOCKERFILE_PATH}"
+    - echo "DOCKER_TARGET_STAGE=${DOCKER_TARGET_STAGE}"
+    - echo "CANDIDATE_IMAGE=${CANDIDATE_IMAGE}"
+    - echo "DOCKER_BUILD_CONTEXT=${DOCKER_BUILD_CONTEXT}"
+    - echo "TEST_SAMTOOLS_FILE=${TEST_SAMTOOLS_FILE}"
+    - echo "HTSLIB_VERSION=${HTSLIB_VERSION}"
+    #
+    - test -f ${DOCKERFILE_PATH:?}
+    - docker pull ${PRE_FETCH_BASE_IMAGE:?}
+    #
+    # Build the image
+    #
+    - BUILD_CMD="docker build --target ${DOCKER_TARGET_STAGE:?} -t ${CANDIDATE_IMAGE:?} -f ${DOCKERFILE_PATH:?} --build-arg HTSLIB_VERSION=${HTSLIB_VERSION:?} --build-arg SAMTOOLS_VERSION=${SAMTOOLS_VERSION:?} --progress=plain ${DOCKER_BUILD_CONTEXT:?}"
+    - echo "Running build command ${BUILD_CMD}"
+    - eval ${BUILD_CMD}
+    #
+    # Test the image
+    #
+    - docker run --rm ${CANDIDATE_IMAGE:?} ls -l ${TEST_SAMTOOLS_FILE:?}
+    - docker run --rm ${CANDIDATE_IMAGE:?} bash ${TEST_SAMTOOLS_FILE:?} ${SAMTOOLS_VERSION:?}
+    # Check if EXPECTS_HTSLIB env-var exists within the container if not skip htlib tests
+    - docker run --rm ${CANDIDATE_IMAGE:?} ls -l ${TEST_HTSLIB_FILE:?}
+    - docker run --rm ${CANDIDATE_IMAGE:?} bash -c "if [[ -n \"\${EXPECTS_HTSLIB}\" ]]; then bash ${TEST_HTSLIB_FILE:?} ${HTSLIB_VERSION:?}; else echo 'Skipping htslib tests'; fi"
+    - echo "Build and test completed successfully"
+
+.generic-script_build_many:
+  script:
+    - echo "Running a build and then test for the image"
+    #
+    - echo "DOCKERFILE_PATH=${DOCKERFILE_PATH}"
+    - echo "DOCKER_TARGET_STAGE=${DOCKER_TARGET_STAGE}"
+    - echo "CANDIDATE_IMAGE=${CANDIDATE_IMAGE}"
+    - echo "DOCKER_BUILD_CONTEXT=${DOCKER_BUILD_CONTEXT}"
+    - echo "TEST_SAMTOOLS_FILE=${TEST_SAMTOOLS_FILE}"
+    # From 1.13 to 1.20
+    - BUILT_IMAGE="htslib"
+    - HTSLIB_VERSION=""
+    - MULTIPLE_VERSIONS=(1.13 1.14 1.15.1 1.16 1.17 1.18 1.19 1.20)
+    - echo "Multiple versions to build and test ${MULTIPLE_VERSIONS[@]}"
+    #
+    - test -f ${DOCKERFILE_PATH:?}
+    - docker pull ${PRE_FETCH_BASE_IMAGE:?}
+    #
+    # Build the image for each version
+    #
+    - |2
+      echo "Building the image for each version"
+      for HTSLIB_VERSION in ${MULTIPLE_VERSIONS[@]}; do
+        BUILD_CMD="docker build --target ${DOCKER_TARGET_STAGE:?} -t ${BUILT_IMAGE:?}:${HTSLIB_VERSION:?} -f ${DOCKERFILE_PATH:?} --build-arg HTSLIB_VERSION=${HTSLIB_VERSION:?} ${DOCKER_BUILD_CONTEXT:?}"
+        # Print the build command in blue so it is easy to see in the long log
+        echo ""
+        echo ""
+        echo ""
+        echo -e "\033[0;34mRunning build command ${BUILD_CMD}\033[0m"
+        echo "Running build command ${BUILD_CMD}"
+        eval ${BUILD_CMD}
+      done
+    #
+    # Test the image for each version
+    #
+    - |2
+      echo "Testing the image for each version"
+      for HTSLIB_VERSION in ${MULTIPLE_VERSIONS[@]}; do
+        # Print the test command in purple so it is easy to see in the long log
+        echo ""
+        echo ""
+        echo ""
+        echo -e "\033[0;35mTesting image ${BUILT_IMAGE:?}:${HTSLIB_VERSION:?}\033[0m"
+        docker run --rm ${BUILT_IMAGE:?}:${HTSLIB_VERSION:?} ls -l ${TEST_SAMTOOLS_FILE:?}
+        docker run --rm ${BUILT_IMAGE:?}:${HTSLIB_VERSION:?} bash ${TEST_SAMTOOLS_FILE:?} ${HTSLIB_VERSION:?}
+      done
+    - echo "Build and test completed successfully"
+
+.template_job__build_one_and_test:
+  extends:
+    - .generic-variables
+    - .component-before_script
+    - .generic-script_build_once
+    - .component-after_script
+    - .component-tags-shared-runner
+    - .component-rules-except-release
+
+.template_job__build_many_and_test:
+  extends:
+    - .generic-variables
+    - .component-before_script
+    - .generic-script_build_many
+    - .component-after_script
+    - .component-tags-shared-runner
+    - .component-rules-develop-feature-hotfix-only
+
+############
+#   JOBS   #
+############
+
+# test-one-ubuntu22-via_github:
+#   stage: test-one
+#   variables:
+#     PRE_FETCH_BASE_IMAGE: ubuntu:22.04
+#     IMAGE_TAG_SUFFIX: "-ubuntu22.usr_local"
+#     DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.via_github
+#   extends:
+#     - .template_job__build_one_and_test
+
+# test-one-ubuntu22-via_github_with_libdeflate:
+#   stage: test-one
+#   variables:
+#     PRE_FETCH_BASE_IMAGE: ubuntu:22.04
+#     IMAGE_TAG_SUFFIX: "-ubuntu22.usr_local"
+#     DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.via_github_w_libdeflate
+#   extends:
+#     - .template_job__build_one_and_test
+
+test-one-ubuntu22-usr_local:
+  stage: test-one
+  variables:
+    PRE_FETCH_BASE_IMAGE: ubuntu:22.04
+    IMAGE_TAG_SUFFIX: "-ubuntu22.usr_local"
+    DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.usr_local
+  extends:
+    - .template_job__build_one_and_test
+
+test-one-ubuntu22-custom:
+  stage: test-one
+  variables:
+    PRE_FETCH_BASE_IMAGE: ubuntu:22.04
+    IMAGE_TAG_SUFFIX: "-ubuntu22.custom"
+    DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.custom
+  extends:
+    - .template_job__build_one_and_test
+
+test-one-ubuntu22-usr_local_and_htslib:
+  stage: test-one
+  variables:
+    PRE_FETCH_BASE_IMAGE: ubuntu:22.04
+    IMAGE_TAG_SUFFIX: "-ubuntu22.usr_local"
+    DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.usr_local.with_htslib
+  extends:
+    - .template_job__build_one_and_test
+
+test-one-ubuntu22-custom_and_htslib:
+  stage: test-one
+  variables:
+    PRE_FETCH_BASE_IMAGE: ubuntu:22.04
+    IMAGE_TAG_SUFFIX: "-ubuntu22.custom"
+    DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.custom.with_htslib
+  extends:
+    - .template_job__build_one_and_test
+# test-one-base_r-usr_local:
+#   stage: test-one
+#   variables:
+#     PRE_FETCH_BASE_IMAGE: r-base:4.2.3
+#     IMAGE_TAG_SUFFIX: "-rbase.usr_local"
+#     DOCKERFILE_PATH: docker/Dockerfile.rbase.usr_local
+#   extends:
+#     - .template_job__build_one_and_test
+
+# test-one-base_r-custom:
+#   stage: test-one
+#   variables:
+#     PRE_FETCH_BASE_IMAGE: r-base:4.2.3
+#     IMAGE_TAG_SUFFIX: "-rbase.custom"
+#     DOCKERFILE_PATH: docker/Dockerfile.rbase.custom
+#   extends:
+#     - .template_job__build_one_and_test
+
+# test-one-python-usr_local:
+#   stage: test-one
+#   variables:
+#     PRE_FETCH_BASE_IMAGE: python:3.11.9-slim-bookworm
+#     IMAGE_TAG_SUFFIX: "-python.usr_local"
+#     DOCKERFILE_PATH: docker/Dockerfile.python.usr_local
+#   extends:
+#     - .template_job__build_one_and_test
+
+# test-one-python-custom:
+#   stage: test-one
+#   variables:
+#     PRE_FETCH_BASE_IMAGE: python:3.11.9-slim-bookworm
+#     IMAGE_TAG_SUFFIX: "-python.custom"
+#     DOCKERFILE_PATH: docker/Dockerfile.python.custom
+#   extends:
+#     - .template_job__build_one_and_test
+
+# test-many-ubuntu22-usr_local:
+#   stage: test-many
+#   variables:
+#     PRE_FETCH_BASE_IMAGE: ubuntu:22.04
+#     IMAGE_TAG_SUFFIX: "-ubuntu22.usr_local"
+#     DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.usr_local
+#   extends:
+#     - .template_job__build_many_and_test
+
+# test-many-python-usr_local:
+#   stage: test-many
+#   variables:
+#     PRE_FETCH_BASE_IMAGE: python:3.11.9-slim-bookworm
+#     IMAGE_TAG_SUFFIX: "-python.usr_local"
+#     DOCKERFILE_PATH: docker/Dockerfile.python.usr_local
+#   extends:
+#     - .template_job__build_many_and_test
+
+# test-many-base_r-usr_local:
+#   stage: test-many
+#   variables:
+#     PRE_FETCH_BASE_IMAGE: r-base:4.2.3
+#     IMAGE_TAG_SUFFIX: "-rbase.usr_local"
+#     DOCKERFILE_PATH: docker/Dockerfile.rbase.usr_local
+#   extends:
+#     - .template_job__build_many_and_test
