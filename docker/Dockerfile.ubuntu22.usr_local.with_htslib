@@ -1,0 +1,69 @@
+###############################
+# BASE stage                  #
+# Minimal to install samtools #
+###############################
+
+FROM ubuntu:22.04 AS base
+
+# Install dependencies for samtools
+# For the installer script:
+# - curl: download files
+# For samtools:
+# - build-essential: for compiling source code (gcc, g++, make)
+# - autoconf, automake: for compiling source code
+# - zlib1g-dev, libbz2-dev, liblzma-dev: compression libraries for samtools
+# - libcurl4-openssl-dev: for curl dev features in samtools
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    autoconf \
+    automake \
+    curl \
+    zlib1g-dev \
+    libbz2-dev \
+    liblzma-dev \
+    libncurses5-dev \
+    libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+
+WORKDIR /opt
+WORKDIR /opt/install
+WORKDIR /opt/repo
+
+# Build time argument for HTSLIB version - argument name can be anything
+ARG HTSLIB_VERSION="1.14" 
+ARG HTSLIB_SCRIPT_URL="https://github.com/team113sanger/htslib-install-script/releases/download/1.0.1/install_htslib.sh"
+
+# Actual installation of htslib (defaults to installing to /usr/local)
+RUN curl -sSL $HTSLIB_SCRIPT_URL | bash -s -- $HTSLIB_VERSION
+
+# Build time argument for SAMTOOLS version - argument name can be anything
+ARG SAMTOOLS_VERSION="1.14" 
+
+# Actual installation of samtools (defaults to installing to /usr/local)
+COPY install_samtools.sh install_samtools.sh
+RUN bash install_samtools.sh $SAMTOOLS_VERSION --use-installed-htslib
+
+##############################
+# TEST stage only            #
+# Test samtools installation #
+##############################
+FROM base AS test
+
+# Create a non-root user
+ENV USER_NAME=testuser
+RUN useradd -m ${USER_NAME:?} 
+
+# Create test directory
+WORKDIR /opt/test
+
+# Copy test files
+COPY --chown=testuser:testuser ./tests/* /opt/test/
+
+# Make sure the test script is executable
+RUN chmod +x /opt/test/run_tests.sh && chown "${USER_NAME:?}:${USER_NAME:?}" -R .
+
+# Switch to the non-root user
+USER testuser
+
+CMD ["bash"]

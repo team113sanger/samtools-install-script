@@ -10,7 +10,8 @@ INSTALL_DIR=""
 PROGRAM_VERSION=""
 IS_DEFAULT_INSTALL_DIR=1 # 1 == true, 0 == false
 IS_HTSLIB_BUILD_DIR_SET=0 # 1 == true, 0 == false
-HTSLIB_BUILD_DIR="na"
+HTSLIB_BUILD_DIR=""
+
 
 ### CONSTANTS ###
 PROGRAM_NAME="samtools"
@@ -19,9 +20,16 @@ DEFAULT_INSTALL_DIR="/usr/local"
 SCRIPT_VERSION="1.0.0"
 REQUIRED_PROGRAMS=(curl make autoconf autoheader gcc tar sed)
 URL_TEMPLATE="https://github.com/samtools/samtools/releases/download/{}/samtools-{}.tar.bz2"
+HTSLIB_BUILD_DIR__PLACEHOLDER__SYSTEM="system"
+HTSLIB_BUILD_DIR__PLACEHOLDER__NA="na"
 
 ### FUNCTIONS ###
 
+function print_debug() {
+  # Print a message in green to stderr
+  local message="${1}"
+  echo -e "\033[0;32m DEBUG: ${message}\033[0m" >&2
+}
 function print_info() {
   # Print a message in green to stderr
   local message="${1}"
@@ -41,23 +49,24 @@ function print_error() {
 }
 
 function print_usage() {
-  echo "Usage: $0  <SAMTOOLS-VERSION> [--install-dir <INSTALL-DIR>] [--setup-dir <SETUP-DIR>] [ --installed-htslib-dir <HTSLIB-DIR>] [-h|--help] [--version]"
+  echo "Usage: $0 <SAMTOOLS-VERSION> [--install-dir <INSTALL-DIR>] [--setup-dir <SETUP-DIR>] [-l|--use-installed-htslib] [-L|--with-htslib <HTSLIB-DIR>] [-h|--help] [--version]"
   echo ""
-  echo "Installs ${PROGRAM_NAME:?} only, compiling it from source. This script does not install htslib."
+  echo "Install ${PROGRAM_NAME} from source, compiling it with a existing htslib installation or a bundled htslib source tree (the default behaviour)."
   echo ""
-  echo "Arguments:"
-  echo "  SAMTOOLS-VERSION: The version of ${PROGRAM_NAME:?} to install e.g. 1.14"
+  echo "Note:"
+  echo "  The script only installs ${PROGRAM_NAME}."
+  echo "  The script does not install htslib - do that separately if tabix and bgzip are needed."
+  echo "  When using '-L', the '-l' option is implied and not required."
   echo ""
   echo "Options:"
-  echo "  --install-dir:    [Default: ${DEFAULT_INSTALL_DIR:?}] The directory to install "
-  echo "                    ${PROGRAM_NAME:?} into, must be an absolute path and writable e.g. /opt/${PROGRAM_NAME:?}"
-  echo "  --setup-dir:      [Default: (set by mktemp)] The directory to download and unpack "
-  echo "                    the ${PROGRAM_NAME:?} tarball (must be writable). Deleted after installation."
-  echo "  --installed-htslib-dir:   If specified, the path to an existing htslib installation is used to "
-  echo "                    compile samtools. Otherwise, samtools will compile with the bundled "
-  echo "                    htslib source (this WILL NOT install htslib)."
-  echo "  -h, --help:       Print this message"
-  echo "  --version:        Print the version of this script"
+  echo "  --install-dir                Specify the installation directory (Default: ${DEFAULT_INSTALL_DIR})."
+  echo "  --setup-dir                  Directory for downloading and unpacking (Default: Temporary directory)."
+  echo "  -l, --use-installed-htslib   Use an existing htslib installation for compilation (assumes standard paths like /usr/local)."
+  echo "  -L, --with-htslib            Specify a directory with an existing htslib installation (useful for non-standard locations)."
+  echo "                               Expects a directory structure with 'include' and 'lib' sub-directories."
+  echo "                               Implies '-l'."
+  echo "  -h, --help                   Display this help message."
+  echo "  --version                    Show the script version."
   echo ""
   echo "Required programs:"
   for program in "${REQUIRED_PROGRAMS[@]}"; do
@@ -69,63 +78,68 @@ function parse_args() {
   # Parse the command-line arguments, setting the INSTALL_DIR and PROGRAM_VERSION
   # global variables. If the arguments are invalid, print an error message and
   # exit.
-  local user_setup_dir=""
-  local install_dir=""
-  local user_install_dir=""
-  local program_version=""
-  local is_default_install_dir=""
-  local htslib_dir=""
+    local user_setup_dir=""
+    local install_dir=""
+    local user_install_dir=""
+    local program_version=""
+    local is_default_install_dir=""
+    local htslib_dir=""
+    local use_installed_htslib=0
 
-  # Parse the command-line arguments
-  while [ "$#" -gt 0 ]; do
-    case "$1" in
-      -h|--help)
-        print_usage
-        exit 0
-        ;;
-      --version)
-        echo "${SCRIPT_VERSION}"
-        exit 0
-        ;;
-      --setup-dir)
-        if [ -z "${2}" ]; then
-          print_error "Missing argument for --setup-dir"
+    # Parse the command-line arguments
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        -h|--help)
           print_usage
-          exit 1
-        fi
-        user_setup_dir="${2}"
-        shift
-        ;;
-      --install-dir)
-        if [ -z "${2}" ]; then
-          print_error "Missing argument for --install-dir"
-          print_usage
-          exit 1
-        fi
-        user_install_dir="${2}"
-        shift
-        ;;
-      --installed-htslib-dir)
-        if [ -z "${2}" ]; then
-          print_error "Missing argument for --installed-htslib-dir"
-          print_usage
-          exit 1
-        fi
-        htslib_dir="${2}"
-        shift
-        ;;
-      *)
-        if [ -z "${program_version}" ]; then
-          program_version="${1}"
-        else
-          print_error "Invalid argument: ${1}"
-          print_usage
-          exit 1
-        fi
-        ;;
-    esac
-    shift
-  done
+          exit 0
+          ;;
+        --version)
+          echo "${SCRIPT_VERSION}"
+          exit 0
+          ;;
+        --setup-dir)
+          if [ -z "${2}" ]; then
+            print_error "Missing argument for --setup-dir"
+            print_usage
+            exit 1
+          fi
+          user_setup_dir="${2}"
+          shift
+          ;;
+        --install-dir)
+          if [ -z "${2}" ]; then
+            print_error "Missing argument for --install-dir"
+            print_usage
+            exit 1
+          fi
+          user_install_dir="${2}"
+          shift
+          ;;
+        -l|--use-installed-htslib)
+          use_installed_htslib=1
+          ;;
+        -lL|-L|--with-htslib)
+          if [ -z "${2}" ]; then
+            print_error "Missing argument for --with-htslib"
+            print_usage
+            exit 1
+          fi
+          htslib_dir="${2}"
+          use_installed_htslib=1
+          shift
+          ;;
+        *)
+          if [ -z "${program_version}" ]; then
+            program_version="${1}"
+          else
+            print_error "Invalid argument: ${1}"
+            print_usage
+            exit 1
+          fi
+          ;;
+      esac
+      shift
+    done
 
   # Check that the required arguments are set
   if [ -z "${program_version}" ]; then
@@ -194,27 +208,34 @@ function parse_args() {
     print_warning "Unexpected ${PROGRAM_NAME:?} version: ${program_version}, expected format is X.Y"
   fi
 
-  # `htslib_dir`
-  # Check that the htslib directory is valid: it is a directory
-  if [[ -n "${htslib_dir}" ]] && [[ ! -d "${htslib_dir}" ]]; then
-    print_error "Invalid htslib directory: ${htslib_dir}"
-    exit 1
+  # Set htslib-related variables
+  if [ "${use_installed_htslib}" -eq 1 ]; then
+    IS_HTSLIB_BUILD_DIR_SET=1
+    if [ -n "${htslib_dir}" ]; then
+      if [ ! -d "${htslib_dir}" ]; then
+        print_error "Invalid htslib directory: ${htslib_dir}"
+        exit 1
+      fi
+      HTSLIB_BUILD_DIR="${htslib_dir}"
+    else
+      HTSLIB_BUILD_DIR="${HTSLIB_BUILD_DIR__PLACEHOLDER__SYSTEM}"
+    fi
+  else
+    IS_HTSLIB_BUILD_DIR_SET=0
+    HTSLIB_BUILD_DIR="${HTSLIB_BUILD_DIR__PLACEHOLDER__NA}"
   fi
 
   # Set the global variables
   INSTALL_DIR="${install_dir}"
-  print_info "Setting INSTALL_DIR=${INSTALL_DIR}"
-  SETUP_DIR="${setup_dir}"
-  print_info "Setting SETUP_DIR=${SETUP_DIR}"
-  PROGRAM_VERSION="${program_version}"
-  print_info "Setting PROGRAM_VERSION=${PROGRAM_VERSION}"
+  print_debug "Setting INSTALL_DIR=${INSTALL_DIR}"
   IS_DEFAULT_INSTALL_DIR="${is_default_install_dir}"
-  print_info "Setting IS_DEFAULT_INSTALL_DIR=${IS_DEFAULT_INSTALL_DIR} (1 == true, 0 == false)"
-  if [[ -n "${htslib_dir}" ]]; then
-    IS_HTSLIB_BUILD_DIR_SET=1
-    HTSLIB_BUILD_DIR="${htslib_dir}"
-    print_info "Setting HTSLIB_BUILD_DIR=${HTSLIB_BUILD_DIR}"
-  fi
+  print_debug "Setting IS_DEFAULT_INSTALL_DIR=${IS_DEFAULT_INSTALL_DIR}  (1 == true, 0 == false)"
+  SETUP_DIR="${setup_dir}"
+  print_debug "Setting SETUP_DIR=${SETUP_DIR}"
+  PROGRAM_VERSION="${program_version}"
+  print_debug "Setting PROGRAM_VERSION=${PROGRAM_VERSION}"
+  print_debug "Setting IS_HTSLIB_BUILD_DIR_SET=${IS_HTSLIB_BUILD_DIR_SET}  (1 == true, 0 == false)"
+  print_debug "Setting HTSLIB_BUILD_DIR=${HTSLIB_BUILD_DIR}  (${HTSLIB_BUILD_DIR__PLACEHOLDER__SYSTEM} == typical system path, ${HTSLIB_BUILD_DIR__PLACEHOLDER__NA} == not set)"
 
 }
 
@@ -337,7 +358,7 @@ function install() {
   local install_dir="${1}"
   local work_dir="${2}"
   local is_default_install_dir="${3}"
-  local htslib_build_dir="${4}" # This value could be "na" if not set -- rely on is_htslib_build_dir_set to determine if it's set
+  local htslib_build_dir="${4}" # This value could be "na" or "system" if not set -- rely on is_htslib_build_dir_set to determine if it's set
   local is_htslib_build_dir_set="${5}"  # 1 == true, 0 == false
   
   # Local variables
@@ -345,10 +366,20 @@ function install() {
   local cmd_non_default_arg__prefix="--prefix=${install_dir:?}"
   local cmd_non_default_arg__cppflags="CPPFLAGS=\"-I${install_dir:?}/include\""
   local cmd_non_default_arg__ldflags="LDFLAGS=\"-L${install_dir:?}/lib -Wl,-R${install_dir:?}/lib\""
-  local cmd_optional_arg__htslib="--with-htslib=${htslib_build_dir:?}"
   local cpu_count=$(get_cpu_count 6)
 
-
+  # If htslib build directory is set and equal to the system path
+  if [[ "$is_htslib_build_dir_set" -eq 1 ]] && [[ "${htslib_build_dir:?}" = "${HTSLIB_BUILD_DIR__PLACEHOLDER__SYSTEM:?}" ]]; then
+    # Use the system htslib
+    local cmd_optional_arg__htslib="--with-htslib=system"
+  # If htslib build directory is set and not equal to the system path
+  elif [[ "$is_htslib_build_dir_set" -eq 1 ]]; then
+    # Use the specified htslib build directory
+    local cmd_optional_arg__htslib="--with-htslib=${htslib_build_dir:?}"
+  # Otherwise, use the bundled htslib
+  else
+    local cmd_optional_arg__htslib=""
+  fi
 
   print_info "Changing current directory to ${work_dir:?}"
   cd "${work_dir:?}"
@@ -365,18 +396,18 @@ function install() {
     exit 1
   }
 
-  print_info "Running configure script"
+  print_info "Compose the configure script command"
   cmd="./configure"
   if [ "${is_default_install_dir:?}" -eq 0 ]; then
     cmd="${cmd:?} ${cmd_non_default_arg__prefix:?}"
     cmd="${cmd:?} ${cmd_non_default_arg__cppflags:?}"
     cmd="${cmd:?} ${cmd_non_default_arg__ldflags:?}"
   fi
-  if [ "${is_htslib_build_dir_set:?}" -eq 1 ]; then
+  if [[ -n "${cmd_optional_arg__htslib}" ]]; then
     cmd="${cmd:?} ${cmd_optional_arg__htslib:?}"
   fi
 
-  print_info "Running configure with command: '${cmd:?}'"
+  print_info "Running configure script as: '${cmd:?}'"
   eval "${cmd:?}"
 
   print_info "Running make"

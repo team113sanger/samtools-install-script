@@ -1,0 +1,85 @@
+###############################
+# BASE stage                  #
+# Minimal to install samtools #
+###############################
+
+FROM ubuntu:22.04 AS base
+
+# Install dependencies for samtools
+# For the installer script:
+# - curl: download files
+# For samtools:
+# - build-essential: for compiling source code (gcc, g++, make)
+# - autoconf, automake: for compiling source code
+# - zlib1g-dev, libbz2-dev, liblzma-dev: compression libraries for samtools
+# - libcurl4-openssl-dev: for curl dev features in samtools
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    autoconf \
+    automake \
+    curl \
+    zlib1g-dev \
+    libbz2-dev \
+    liblzma-dev \
+    libncurses5-dev \
+    libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+
+WORKDIR /opt
+WORKDIR /opt/install_htslib
+WORKDIR /opt/install_samtools
+WORKDIR /opt/repo
+
+# Build time argument for HTSLIB version - argument name can be anything
+ARG HTSLIB_VERSION="1.14" 
+ARG HTSLIB_SCRIPT_URL="https://github.com/team113sanger/htslib-install-script/releases/download/1.0.1/install_htslib.sh"
+ARG INSTALL_HTSLIB_DIR="/opt/install_htslib"
+
+# Actual installation of htslib (defaults to installing to /usr/local)
+RUN curl -sSL $HTSLIB_SCRIPT_URL | bash -s -- $HTSLIB_VERSION --install-dir ${INSTALL_HTSLIB_DIR:?}
+ENV PATH="${INSTALL_HTSLIB_DIR:?}/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${INSTALL_HTSLIB_DIR:?}/lib:${LD_LIBRARY_PATH}"
+ENV LIBRARY_PATH="${INSTALL_HTSLIB_DIR:?}/lib:${LIBRARY_PATH}"
+ENV C_INCLUDE_PATH="${INSTALL_HTSLIB_DIR:?}/include:${C_INCLUDE_PATH}"
+ENV CPLUS_INCLUDE_PATH="${INSTALL_HTSLIB_DIR:?}/include:${CPLUS_INCLUDE_PATH}"
+ENV PKG_CONFIG_PATH="${INSTALL_HTSLIB_DIR:?}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+
+COPY install_samtools.sh install_samtools.sh
+# Build time argument for SAMTOOLS version - argument name can be anything
+ARG SAMTOOLS_VERSION="1.14"
+ARG INSTALL_SAMTOOLS_DIR="/opt/install_htslib"
+
+
+# Actual installation of samtools to a different arbitrary directory
+RUN bash install_samtools.sh $SAMTOOLS_VERSION --install-dir ${INSTALL_SAMTOOLS_DIR:?} --use-installed-htslib 
+ENV PATH="${INSTALL_SAMTOOLS_DIR:?}/bin:${PATH}"
+
+## NB: If you do not define C_INCLUDE_PATH, CPLUS_INCLUDE_PATH, LIBRARY_PATH, and PKG_CONFIG_PATH when installing htslib,
+## you will need to add '--with-htslib=...' when installing samtools.
+## For example:
+## 'install_samtools.sh $SAMTOOLS_VERSION --install-dir ${INSTALL_SAMTOOLS_DIR:?} --use-installed-htslib --with-htslib=${INSTALL_HTSLIB_DIR:?}'
+
+##############################
+# TEST stage only            #
+# Test samtools installation #
+##############################
+FROM base AS test
+
+# Create a non-root user
+ENV USER_NAME=testuser
+RUN useradd -m ${USER_NAME:?} 
+
+# Create test directory
+WORKDIR /opt/test
+
+# Copy test files
+COPY --chown=testuser:testuser ./tests/* /opt/test/
+
+# Make sure the test script is executable
+RUN chmod +x /opt/test/run_tests.sh && chown "${USER_NAME:?}:${USER_NAME:?}" -R .
+
+# Switch to the non-root user
+USER testuser
+
+CMD ["bash"]
