@@ -8,7 +8,7 @@ FROM ubuntu:22.04 AS base
 # Install dependencies for samtools
 # For the installer script:
 # - curl: download files
-# For samtools:
+# For samtools and htslib:
 # - build-essential: for compiling source code (gcc, g++, make)
 # - autoconf, automake: for compiling source code
 # - zlib1g-dev, libbz2-dev, liblzma-dev: compression libraries for samtools
@@ -49,6 +49,15 @@ RUN bash install_samtools.sh $SAMTOOLS_VERSION --use-installed-htslib
 # Test samtools installation #
 ##############################
 FROM base AS test
+
+# Install additional tools for testing htslib (c compiler)
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add environment variable for use in test script
+ENV EXPECTS_HTSLIB=${HTSLIB_VERSION:?}
 
 # Create a non-root user
 ENV USER_NAME=testuser

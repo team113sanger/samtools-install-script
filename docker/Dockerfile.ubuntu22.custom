@@ -8,11 +8,11 @@ FROM ubuntu:22.04 AS base
 # Install dependencies for samtools
 # For the installer script:
 # - curl: download files
-# For samtools:
+# For samtools and htslib:
 # - build-essential: for compiling source code (gcc, g++, make)
 # - autoconf, automake: for compiling source code
 # - zlib1g-dev, libbz2-dev, liblzma-dev: compression libraries for samtools
-# - libcurl4-openssl-dev: for curl dev features in samtools
+# - libcurl4-openssl-dev: for curl dev features in samtoolss
 RUN apt-get update && apt-get install -y \
     build-essential \
     autoconf \
