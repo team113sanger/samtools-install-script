@@ -164,7 +164,7 @@ test-one-ubuntu22-usr_local_and_htslib:
   stage: test-one
   variables:
     PRE_FETCH_BASE_IMAGE: ubuntu:22.04
-    IMAGE_TAG_SUFFIX: "-ubuntu22.usr_local"
+    IMAGE_TAG_SUFFIX: "-ubuntu22.usr_local.htslib"
     DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.usr_local.with_htslib
   extends:
     - .template_job__build_one_and_test
@@ -173,46 +173,46 @@ test-one-ubuntu22-custom_and_htslib:
   stage: test-one
   variables:
     PRE_FETCH_BASE_IMAGE: ubuntu:22.04
-    IMAGE_TAG_SUFFIX: "-ubuntu22.custom"
+    IMAGE_TAG_SUFFIX: "-ubuntu22.custom.htslib"
     DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.custom.with_htslib
   extends:
     - .template_job__build_one_and_test
-# test-one-base_r-usr_local:
-#   stage: test-one
-#   variables:
-#     PRE_FETCH_BASE_IMAGE: r-base:4.2.3
-#     IMAGE_TAG_SUFFIX: "-rbase.usr_local"
-#     DOCKERFILE_PATH: docker/Dockerfile.rbase.usr_local
-#   extends:
-#     - .template_job__build_one_and_test
 
-# test-one-base_r-custom:
-#   stage: test-one
-#   variables:
-#     PRE_FETCH_BASE_IMAGE: r-base:4.2.3
-#     IMAGE_TAG_SUFFIX: "-rbase.custom"
-#     DOCKERFILE_PATH: docker/Dockerfile.rbase.custom
-#   extends:
-#     - .template_job__build_one_and_test
+test-one-base_r-usr_local:
+  stage: test-one
+  variables:
+    PRE_FETCH_BASE_IMAGE: r-base:4.2.3
+    IMAGE_TAG_SUFFIX: "-rbase.usr_local"
+    DOCKERFILE_PATH: docker/Dockerfile.rbase.usr_local
+  extends:
+    - .template_job__build_one_and_test
 
-# test-one-python-usr_local:
-#   stage: test-one
-#   variables:
-#     PRE_FETCH_BASE_IMAGE: python:3.11.9-slim-bookworm
-#     IMAGE_TAG_SUFFIX: "-python.usr_local"
-#     DOCKERFILE_PATH: docker/Dockerfile.python.usr_local
-#   extends:
-#     - .template_job__build_one_and_test
+test-one-base_r-custom:
+  stage: test-one
+  variables:
+    PRE_FETCH_BASE_IMAGE: r-base:4.2.3
+    IMAGE_TAG_SUFFIX: "-rbase.custom"
+    DOCKERFILE_PATH: docker/Dockerfile.rbase.custom
+  extends:
+    - .template_job__build_one_and_test
 
-# test-one-python-custom:
-#   stage: test-one
-#   variables:
-#     PRE_FETCH_BASE_IMAGE: python:3.11.9-slim-bookworm
-#     IMAGE_TAG_SUFFIX: "-python.custom"
-#     DOCKERFILE_PATH: docker/Dockerfile.python.custom
-#   extends:
-#     - .template_job__build_one_and_test
+test-one-python-usr_local:
+  stage: test-one
+  variables:
+    PRE_FETCH_BASE_IMAGE: python:3.11.9-slim-bookworm
+    IMAGE_TAG_SUFFIX: "-python.usr_local"
+    DOCKERFILE_PATH: docker/Dockerfile.python.usr_local
+  extends:
+    - .template_job__build_one_and_test
 
+test-one-python-custom:
+  stage: test-one
+  variables:
+    PRE_FETCH_BASE_IMAGE: python:3.11.9-slim-bookworm
+    IMAGE_TAG_SUFFIX: "-python.custom"
+    DOCKERFILE_PATH: docker/Dockerfile.python.custom
+  extends:
+    - .template_job__build_one_and_test
 # test-many-ubuntu22-usr_local:
 #   stage: test-many
 #   variables:
