@@ -48,6 +48,7 @@ include:
     # Test the image
     #
     - docker run --rm ${CANDIDATE_IMAGE:?} ls -l ${TEST_SAMTOOLS_FILE:?}
+    # A tty needs to be allocated for the test script to work (samtools tview)
     - docker run --rm -t ${CANDIDATE_IMAGE:?} bash ${TEST_SAMTOOLS_FILE:?} ${SAMTOOLS_VERSION:?}
     # Check if EXPECTS_HTSLIB env-var exists within the container if not skip htlib tests
     - docker run --rm ${CANDIDATE_IMAGE:?} ls -l ${TEST_HTSLIB_FILE:?}
@@ -78,12 +79,13 @@ include:
     - |2
       echo "Building the image for each version"
       for SAMTOOLS_VERSION in ${MULTIPLE_VERSIONS[@]}; do
+        HTSLIB_VERSION=${SAMTOOLS_VERSION}
         BUILD_CMD="docker build --target ${DOCKER_TARGET_STAGE:?} -t ${BUILT_IMAGE:?}:${SAMTOOLS_VERSION:?} -f ${DOCKERFILE_PATH:?} --build-arg HTSLIB_VERSION=${HTSLIB_VERSION:?} --build-arg SAMTOOLS_VERSION=${SAMTOOLS_VERSION:?} ${DOCKER_BUILD_CONTEXT:?}"
         # Print the build command in blue so it is easy to see in the long log
         echo ""
         echo ""
         echo ""
-        echo -e "\033[0;34mRunning build command ${BUILD_CMD}\033[0m"
+        echo -e "\033[0;34mRunning build command (${SAMTOOLS_VERSION:?}): ${BUILD_CMD}\033[0m"
         echo "Running build command ${BUILD_CMD}"
         eval ${BUILD_CMD}
       done
@@ -99,7 +101,8 @@ include:
         echo ""
         echo -e "\033[0;35mTesting image ${BUILT_IMAGE:?}:${SAMTOOLS_VERSION:?}\033[0m"
         docker run --rm ${BUILT_IMAGE:?}:${SAMTOOLS_VERSION:?} ls -l ${TEST_SAMTOOLS_FILE:?}
-        docker run --rm ${BUILT_IMAGE:?}:${SAMTOOLS_VERSION:?} bash ${TEST_SAMTOOLS_FILE:?} ${SAMTOOLS_VERSION:?}
+        # A tty needs to be allocated for the test script to work (samtools tview)
+        docker run --rm -t ${BUILT_IMAGE:?}:${SAMTOOLS_VERSION:?} bash ${TEST_SAMTOOLS_FILE:?} ${SAMTOOLS_VERSION:?}
         docker run --rm ${BUILT_IMAGE:?}:${SAMTOOLS_VERSION:?} bash -c "if [[ -n \"\${EXPECTS_HTSLIB}\" ]]; then bash ${TEST_HTSLIB_FILE:?} ${HTSLIB_VERSION:?}; else echo 'Skipping htslib tests'; fi"
       done
     - echo "Build and test completed successfully"
@@ -126,23 +129,23 @@ include:
 #   JOBS   #
 ############
 
-# test-one-ubuntu22-via_github:
-#   stage: test-one
-#   variables:
-#     PRE_FETCH_BASE_IMAGE: ubuntu:22.04
-#     IMAGE_TAG_SUFFIX: "-ubuntu22.via_github"
-#     DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.via_github
-#   extends:
-#     - .template_job__build_one_and_test
+test-one-ubuntu22-via_github:
+  stage: test-one
+  variables:
+    PRE_FETCH_BASE_IMAGE: ubuntu:22.04
+    IMAGE_TAG_SUFFIX: "-ubuntu22.via_github"
+    DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.via_github
+  extends:
+    - .template_job__build_one_and_test
 
-# test-one-ubuntu22-via_github_with_htslib_and_libdeflate:
-#   stage: test-one
-#   variables:
-#     PRE_FETCH_BASE_IMAGE: ubuntu:22.04
-#     IMAGE_TAG_SUFFIX: "-ubuntu22.via_github.with_htslib_and_libdeflate"
-#     DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.via_github.with_htslib_and_libdeflate
-#   extends:
-#     - .template_job__build_one_and_test
+test-one-ubuntu22-via_github_with_htslib_and_libdeflate:
+  stage: test-one
+  variables:
+    PRE_FETCH_BASE_IMAGE: ubuntu:22.04
+    IMAGE_TAG_SUFFIX: "-ubuntu22.via_github.with_htslib_and_libdeflate"
+    DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.via_github.with_htslib_and_libdeflate
+  extends:
+    - .template_job__build_one_and_test
 
 test-one-ubuntu22-usr_local:
   stage: test-one
