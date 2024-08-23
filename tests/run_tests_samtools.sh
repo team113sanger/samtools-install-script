@@ -26,6 +26,14 @@ print_result() {
     fi
 }
 
+# Function to compare version numbers
+# e.g. version_ge "1.10" "1.9" -- exit status 0
+# e.g. version_ge "1.10" "1.11" -- exit status 1
+version_ge() {
+    test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1"
+}
+
+
 echo "Starting samtools test suite..."
 echo "Expected samtools version: $EXPECTED_VERSION"
 
@@ -46,18 +54,35 @@ fi
 
 # Test 3: Check for required programs in PATH
 echo "Test 3: Checking for required programs in PATH..."
-required_programs=(
-    "ace2sam"
-    "maq2sam-long"
-    "maq2sam-short"
-    "md5fa"
-    "md5sum-lite"
-    "plot-ampliconstats"
-    "plot-bamstats"
-    "samtools"
-    "wgsim"
-)
-
+# For 1.10 only a different list of programs is required. 1.10 is the oldest
+# version we support, everything newer should be fine.
+case "$EXPECTED_VERSION" in
+    "1.10")
+        required_programs=(
+            "ace2sam"
+            "maq2sam-long"
+            "maq2sam-short"
+            "md5fa"
+            "md5sum-lite"
+            "plot-bamstats"
+            "samtools"
+            "wgsim"
+        )
+        ;;
+    *)
+        required_programs=(
+            "ace2sam"
+            "maq2sam-long"
+            "maq2sam-short"
+            "md5fa"
+            "md5sum-lite"
+            "plot-ampliconstats"
+            "plot-bamstats"
+            "samtools"
+            "wgsim"
+        )
+        ;;
+esac
 for program in "${required_programs[@]}"; do
     which "$program" > /dev/null
     print_result "$program is in PATH"
@@ -89,14 +114,22 @@ samtools mpileup -f ex1.fa ex1.bam > ex1.pileup
 [ -s ex1.pileup ] && print_result "Generated pileup"
 
 # Test 9: Generate uncompressed VCF
-echo "Test 9: Generating uncompressed VCF..."
-samtools mpileup -vu -f ex1.fa ex1.bam > ex1.vcf
-[ -s ex1.vcf ] && print_result "Generated uncompressed VCF"
+if version_ge "$EXPECTED_VERSION" "1.15"; then
+    echo "Test 9: Skipped for version $EXPECTED_VERSION (>= 1.15)"
+else
+    echo "Test 9: Generating uncompressed VCF..."
+    samtools mpileup -vu -f ex1.fa ex1.bam > ex1.vcf
+    [ -s ex1.vcf ] && print_result "Generated uncompressed VCF"
+fi
 
 # Test 10: Generate compressed BCF
-echo "Test 10: Generating compressed BCF..."
-samtools mpileup -g -f ex1.fa ex1.bam > ex1.bcf
-[ -s ex1.bcf ] && print_result "Generated compressed BCF"
+if version_ge "$EXPECTED_VERSION" "1.15"; then
+    echo "Test 10: Skipped for version $EXPECTED_VERSION (>= 1.15)"
+else
+    echo "Test 10: Generating compressed BCF..."
+    samtools mpileup -g -f ex1.fa ex1.bam > ex1.bcf
+    [ -s ex1.bcf ] && print_result "Generated compressed BCF"
+fi
 
 # Test 11: Convert BAM to SAM
 echo "Test 11: Converting BAM back to SAM..."
