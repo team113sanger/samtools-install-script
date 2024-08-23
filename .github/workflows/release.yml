@@ -13,14 +13,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check for install_htslib.sh
-        run: test -f install_htslib.sh
+      - name: Check for install_samtools.sh
+        run: test -f install_samtools.sh
 
       - name: Create Release
         # Docs, see: https://github.com/softprops/action-gh-release
         uses: softprops/action-gh-release@v2
         with:
-          files: install_htslib.sh
+          files: install_samtools.sh
           name: Release ${{ github.ref_name }}
           body: |
             Auto-generated release for ${{ github.ref_name }}. Please see CHANGELOG.md for more details.
