@@ -1,0 +1,78 @@
+###############################
+# BASE stage                  #
+# Minimal to install samtools #
+###############################
+
+FROM ubuntu:22.04 AS base
+
+# Install dependencies for samtools
+# For the installer script:
+# - curl: download files
+# For samtools and htslib:
+# - build-essential: for compiling source code (gcc, g++, make)
+# - autoconf, automake: for compiling source code
+# - zlib1g-dev, libbz2-dev, liblzma-dev: compression libraries for samtools
+# - libcurl4-openssl-dev: for curl dev features in samtools
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    autoconf \
+    automake \
+    curl \
+    zlib1g-dev \
+    libbz2-dev \
+    liblzma-dev \
+    libncurses5-dev \
+    libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+
+WORKDIR /opt
+WORKDIR /opt/install
+WORKDIR /opt/repo
+
+# Build time argument for HTSLIB version - argument name can be anything
+ARG LIBDEFLATE_VERSION="v1.9"
+ARG HTSLIB_VERSION="1.14"
+ARG SAMTOOLS_VERSION="1.14"
+ARG LIBDEFLATE_SCRIPT_URL="https://github.com/team113sanger/libdeflate-install-script/releases/download/1.0.1/install_libdeflate.sh"
+ARG HTSLIB_SCRIPT_URL="https://github.com/team113sanger/htslib-install-script/releases/download/1.0.1/install_htslib.sh"
+ARG SAMTOOLS_SCRIPT_URL="https://github.com/team113sanger/samtools-install-script/releases/download/1.0.0/install_samtools.sh"
+
+# Actual installation of libdeflate, htslib, and samtools
+RUN curl -sSL $LIBDEFLATE_SCRIPT_URL | bash -s -- $LIBDEFLATE_VERSION
+RUN curl -sSL $HTSLIB_SCRIPT_URL | bash -s -- $HTSLIB_VERSION
+RUN curl -sSL $SAMTOOLS_SCRIPT_URL | bash -s -- $SAMTOOLS_VERSION --use-installed-htslib
+
+##############################
+# TEST stage only            #
+# Test samtools installation #
+##############################
+FROM base AS test
+
+# Install additional tools for testing htslib (c compiler)
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add environment variable for use in test script
+ENV EXPECTS_HTSLIB=${HTSLIB_VERSION:?}
+
+# Create a non-root user
+ENV USER_NAME=testuser
+RUN useradd -m ${USER_NAME:?} 
+
+# Create test directory
+WORKDIR /opt/test
+
+# Copy test files
+COPY --chown=testuser:testuser ./tests/* /opt/test/
+
+# Make sure the test script is executable
+RUN chmod +x *.sh && chown "${USER_NAME:?}:${USER_NAME:?}" -R .
+
+# Switch to the non-root user
+USER testuser
+
+CMD ["bash"]
