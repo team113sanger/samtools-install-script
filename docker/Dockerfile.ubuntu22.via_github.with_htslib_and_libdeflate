@@ -8,6 +8,8 @@ FROM ubuntu:22.04 AS base
 # Install dependencies for samtools
 # For the installer script:
 # - curl: download files
+# For libdeflate:
+# - cmake, clang: for compiling libdeflate
 # For samtools and htslib:
 # - build-essential: for compiling source code (gcc, g++, make)
 # - autoconf, automake: for compiling source code
@@ -17,6 +19,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     autoconf \
     automake \
+    cmake \
+    clang \
     curl \
     zlib1g-dev \
     libbz2-dev \

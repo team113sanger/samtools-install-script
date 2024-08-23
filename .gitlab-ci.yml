@@ -130,17 +130,17 @@ include:
 #   stage: test-one
 #   variables:
 #     PRE_FETCH_BASE_IMAGE: ubuntu:22.04
-#     IMAGE_TAG_SUFFIX: "-ubuntu22.usr_local"
+#     IMAGE_TAG_SUFFIX: "-ubuntu22.via_github"
 #     DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.via_github
 #   extends:
 #     - .template_job__build_one_and_test
 
-# test-one-ubuntu22-via_github_with_libdeflate:
+# test-one-ubuntu22-via_github_with_htslib_and_libdeflate:
 #   stage: test-one
 #   variables:
 #     PRE_FETCH_BASE_IMAGE: ubuntu:22.04
-#     IMAGE_TAG_SUFFIX: "-ubuntu22.usr_local"
-#     DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.via_github_w_libdeflate
+#     IMAGE_TAG_SUFFIX: "-ubuntu22.via_github.with_htslib_and_libdeflate"
+#     DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.via_github.with_htslib_and_libdeflate
 #   extends:
 #     - .template_job__build_one_and_test
 
@@ -224,20 +224,21 @@ test-many-ubuntu22-usr_local:
     DOCKERFILE_PATH: docker/Dockerfile.ubuntu22.usr_local
   extends:
     - .template_job__build_many_and_test
-# test-many-python-usr_local:
-#   stage: test-many
-#   variables:
-#     PRE_FETCH_BASE_IMAGE: python:3.11.9-slim-bookworm
-#     IMAGE_TAG_SUFFIX: "-python.usr_local"
-#     DOCKERFILE_PATH: docker/Dockerfile.python.usr_local
-#   extends:
-#     - .template_job__build_many_and_test
 
-# test-many-base_r-usr_local:
-#   stage: test-many
-#   variables:
-#     PRE_FETCH_BASE_IMAGE: r-base:4.2.3
-#     IMAGE_TAG_SUFFIX: "-rbase.usr_local"
-#     DOCKERFILE_PATH: docker/Dockerfile.rbase.usr_local
-#   extends:
-#     - .template_job__build_many_and_test
+test-many-python-usr_local:
+  stage: test-many
+  variables:
+    PRE_FETCH_BASE_IMAGE: python:3.11.9-slim-bookworm
+    IMAGE_TAG_SUFFIX: "-python.usr_local"
+    DOCKERFILE_PATH: docker/Dockerfile.python.usr_local
+  extends:
+    - .template_job__build_many_and_test
+
+test-many-base_r-usr_local:
+  stage: test-many
+  variables:
+    PRE_FETCH_BASE_IMAGE: r-base:4.2.3
+    IMAGE_TAG_SUFFIX: "-rbase.usr_local"
+    DOCKERFILE_PATH: docker/Dockerfile.rbase.usr_local
+  extends:
+    - .template_job__build_many_and_test
