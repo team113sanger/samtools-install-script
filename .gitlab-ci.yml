@@ -78,12 +78,13 @@ include:
     - |2
       echo "Building the image for each version"
       for SAMTOOLS_VERSION in ${MULTIPLE_VERSIONS[@]}; do
+        HTSLIB_VERSION=${SAMTOOLS_VERSION}
         BUILD_CMD="docker build --target ${DOCKER_TARGET_STAGE:?} -t ${BUILT_IMAGE:?}:${SAMTOOLS_VERSION:?} -f ${DOCKERFILE_PATH:?} --build-arg HTSLIB_VERSION=${HTSLIB_VERSION:?} --build-arg SAMTOOLS_VERSION=${SAMTOOLS_VERSION:?} ${DOCKER_BUILD_CONTEXT:?}"
         # Print the build command in blue so it is easy to see in the long log
         echo ""
         echo ""
         echo ""
-        echo -e "\033[0;34mRunning build command ${BUILD_CMD}\033[0m"
+        echo -e "\033[0;34mRunning build command (${SAMTOOLS_VERSION:?}): ${BUILD_CMD}\033[0m"
         echo "Running build command ${BUILD_CMD}"
         eval ${BUILD_CMD}
       done
