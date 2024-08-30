@@ -31,7 +31,7 @@ WORKDIR /opt/repo
 
 # Build time argument for SAMTOOLS version - argument name can be anything
 ARG SAMTOOLS_VERSION="1.14" 
-ARG SAMTOOLS_SCRIPT_URL="https://github.com/team113sanger/samtools-install-script/releases/download/1.0.0/install_samtools.sh"
+ARG SAMTOOLS_SCRIPT_URL="https://github.com/team113sanger/samtools-install-script/releases/download/1.0.1/install_samtools.sh"
 
 # Actual installation of samtools (defaults to installing to /usr/local)
 RUN curl -sSL $SAMTOOLS_SCRIPT_URL | bash -s -- $SAMTOOLS_VERSION
