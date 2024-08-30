@@ -39,8 +39,8 @@ ARG LIBDEFLATE_VERSION="v1.9"
 ARG HTSLIB_VERSION="1.14"
 ARG SAMTOOLS_VERSION="1.14"
 ARG LIBDEFLATE_SCRIPT_URL="https://github.com/team113sanger/libdeflate-install-script/releases/download/1.0.1/install_libdeflate.sh"
-ARG HTSLIB_SCRIPT_URL="https://github.com/team113sanger/htslib-install-script/releases/download/1.0.1/install_htslib.sh"
-ARG SAMTOOLS_SCRIPT_URL="https://github.com/team113sanger/samtools-install-script/releases/download/1.0.0/install_samtools.sh"
+ARG HTSLIB_SCRIPT_URL="https://github.com/team113sanger/htslib-install-script/releases/download/1.0.2/install_htslib.sh"
+ARG SAMTOOLS_SCRIPT_URL="https://github.com/team113sanger/samtools-install-script/releases/download/1.0.1/install_samtools.sh"
 
 # Actual installation of libdeflate, htslib, and samtools
 RUN curl -sSL $LIBDEFLATE_SCRIPT_URL | bash -s -- $LIBDEFLATE_VERSION

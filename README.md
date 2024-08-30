@@ -1,4 +1,4 @@
-# htslib-install-script
+# samtools-install-script
 
 A convenience script to install any version of `samtools` on an Ubuntu (`22.04`) or Debian system (`bookworm`).
 
@@ -58,7 +58,7 @@ LIBDEFLATE_VERSION="v1.9"
 HTSLIB_VERSION="1.16"
 SAMTOOLS_VERSION="1.16"
 LIBDEFLATE_SCRIPT_URL="https://github.com/team113sanger/libdeflate-install-script/releases/download/1.0.1/install_libdeflate.sh"
-HTSLIB_SCRIPT_URL="https://github.com/team113sanger/htslib-install-script/releases/download/1.0.1/install_htslib.sh"
+HTSLIB_SCRIPT_URL="https://github.com/team113sanger/htslib-install-script/releases/download/1.0.2/install_htslib.sh"
 SAMTOOLS_SCRIPT_URL="https://github.com/team113sanger/samtools-install-script/releases/download/1.0.1/install_samtools.sh"
 
 curl -sSL $LIBDEFLATE_SCRIPT_URL | bash -s -- $LIBDEFLATE_VERSION
