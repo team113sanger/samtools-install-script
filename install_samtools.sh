@@ -18,7 +18,7 @@ PROGRAM_NAME="samtools"
 TARBALL_SUFFIX=".tar.bz2"
 DEFAULT_INSTALL_DIR="/usr/local"
 SCRIPT_VERSION="1.0.1"
-REQUIRED_PROGRAMS=(curl make autoconf autoheader gcc tar sed)
+REQUIRED_PROGRAMS=(curl make autoconf autoheader gcc tar sed ldconfig)
 URL_TEMPLATE="https://github.com/samtools/samtools/releases/download/{}/samtools-{}.tar.bz2"
 HTSLIB_BUILD_DIR__PLACEHOLDER__SYSTEM="system"
 HTSLIB_BUILD_DIR__PLACEHOLDER__NA="na"
@@ -461,6 +461,9 @@ function main() {
 
   # Clean up the installation directory
   clean_up "${setup_dir:?}" "${tarball:?}"
+
+  # Run ldconfig to update the shared library cache
+  ldconfig
 
   print_info "Installation complete."
 }

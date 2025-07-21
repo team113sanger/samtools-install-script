@@ -19,7 +19,7 @@ The script `install_samtools.sh` is a convenience script to install
 a suite of programs for interacting with high-throughput sequencing data.
 
 The script encapsulates the steps to download, configure, compile and install
-`samtools` to a specified location, for versions `1.10` to `1.20`. It does not install htslib (or tabix).
+`samtools` to a specified location, for versions `1.10` to `1.22`. It does not install htslib (or tabix).
 
 The script is tested via a private GitLab CICD against Ubuntu 22.04 and Debian
 bookworm with popular Docker images.
@@ -50,7 +50,7 @@ wget -qO- $SAMTOOLS_SCRIPT_URL | bash -s -- $SAMTOOLS_VERSION
 Typically you want samtools with tabix and bgzip (which are provided by
 installing htslib) and libdeflate for faster decompression of BAM/CRAM files.
 
-For a Dockerised example of how to install `samtools` with both `libdeflate` and `htslib`, see the `docker/Dockerfile.ubuntu22.via_github.with_htslib_and_libdeflate`.
+**Software Requirements?** See a Dockerised example and the various `apt-get` installations as part of how to install `samtools` with both `libdeflate` and `htslib`, see the `docker/Dockerfile.ubuntu22.via_github.with_htslib_and_libdeflate`.
 
 
 ```bash
@@ -142,6 +142,12 @@ The testing of script is done using Docker images to capture the minimal install
 | 1.20            | Ubuntu 22.04                               | ✅ | ✅ |
 | 1.20            | R-Base 4.2.3 (*Debian* bookworm)           | ✅ | ✅ |
 | 1.20            | Python 3.11.9 (*Debian* bookworm)          | ✅ | ✅ |
+| 1.21            | Ubuntu 22.04                               | ✅ | ✅ |
+| 1.21            | R-Base 4.2.3 (*Debian* bookworm)           | ✅ | ✅ |
+| 1.21            | Python 3.11.9 (*Debian* bookworm)          | ✅ | ✅ |
+| 1.22            | Ubuntu 22.04                               | ✅ | ✅ |
+| 1.22            | R-Base 4.2.3 (*Debian* bookworm)           | ✅ | ✅ |
+| 1.22            | Python 3.11.9 (*Debian* bookworm)          | ✅ | ✅ |
 
 
 ## Development
