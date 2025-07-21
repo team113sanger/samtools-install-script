@@ -64,11 +64,11 @@ include:
     - echo "CANDIDATE_IMAGE=${CANDIDATE_IMAGE}"
     - echo "DOCKER_BUILD_CONTEXT=${DOCKER_BUILD_CONTEXT}"
     - echo "TEST_SAMTOOLS_FILE=${TEST_SAMTOOLS_FILE}"
-    # From 1.13 to 1.20
+    # From 1.13 to 1.22
     - BUILT_IMAGE="htslib"
     - HTSLIB_VERSION=""
     - SAMTOOLS_VERSION=""
-    - MULTIPLE_VERSIONS=(1.10 1.11 1.12 1.13 1.14 1.15.1 1.16 1.17 1.18 1.19 1.20)
+    - MULTIPLE_VERSIONS=(1.10 1.11 1.12 1.13 1.14 1.15.1 1.16 1.17 1.18 1.19 1.20 1.21 1.22)
     - echo "Multiple versions to build and test ${MULTIPLE_VERSIONS[@]}"
     #
     - test -f ${DOCKERFILE_PATH:?}
