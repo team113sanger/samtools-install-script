@@ -36,7 +36,7 @@ For a Dockerised example of how to install `samtools`, see the `docker/Dockerfil
 Various version of the script can be downloaded from the [releases page](https://github.com/team113sanger/htslib-install-script/releases).
 
 ```bash
-SAMTOOLS_VERSION="1.16"
+SAMTOOLS_VERSION="1.22.1"
 SAMTOOLS_SCRIPT_URL="https://github.com/team113sanger/samtools-install-script/releases/download/1.0.1/install_samtools.sh"
 
 curl -sSL $SAMTOOLS_SCRIPT_URL | bash -s -- $SAMTOOLS_VERSION
@@ -55,11 +55,11 @@ installing htslib) and libdeflate for faster decompression of BAM/CRAM files.
 
 ```bash
 LIBDEFLATE_VERSION="v1.9"
-HTSLIB_VERSION="1.16"
-SAMTOOLS_VERSION="1.16"
+HTSLIB_VERSION="1.22.1"
+SAMTOOLS_VERSION="1.22.1"
 LIBDEFLATE_SCRIPT_URL="https://github.com/team113sanger/libdeflate-install-script/releases/download/1.0.1/install_libdeflate.sh"
-HTSLIB_SCRIPT_URL="https://github.com/team113sanger/htslib-install-script/releases/download/1.0.2/install_htslib.sh"
-SAMTOOLS_SCRIPT_URL="https://github.com/team113sanger/samtools-install-script/releases/download/1.0.1/install_samtools.sh"
+HTSLIB_SCRIPT_URL="https://github.com/team113sanger/htslib-install-script/releases/download/1.0.3/install_htslib.sh"
+SAMTOOLS_SCRIPT_URL="https://github.com/team113sanger/samtools-install-script/releases/download/1.0.2/install_samtools.sh"
 
 curl -sSL $LIBDEFLATE_SCRIPT_URL | bash -s -- $LIBDEFLATE_VERSION
 curl -sSL $HTSLIB_SCRIPT_URL | bash -s -- $HTSLIB_VERSION
@@ -145,9 +145,9 @@ The testing of script is done using Docker images to capture the minimal install
 | 1.21            | Ubuntu 22.04                               | ✅ | ✅ |
 | 1.21            | R-Base 4.2.3 (*Debian* bookworm)           | ✅ | ✅ |
 | 1.21            | Python 3.11.9 (*Debian* bookworm)          | ✅ | ✅ |
-| 1.22            | Ubuntu 22.04                               | ✅ | ✅ |
-| 1.22            | R-Base 4.2.3 (*Debian* bookworm)           | ✅ | ✅ |
-| 1.22            | Python 3.11.9 (*Debian* bookworm)          | ✅ | ✅ |
+| 1.22.1          | Ubuntu 22.04                               | ✅ | ✅ |
+| 1.22.1          | R-Base 4.2.3 (*Debian* bookworm)           | ✅ | ✅ |
+| 1.22.1          | Python 3.11.9 (*Debian* bookworm)          | ✅ | ✅ |
 
 
 ## Development
