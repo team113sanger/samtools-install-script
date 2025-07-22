@@ -59,7 +59,7 @@ HTSLIB_VERSION="1.22.1"
 SAMTOOLS_VERSION="1.22.1"
 LIBDEFLATE_SCRIPT_URL="https://github.com/team113sanger/libdeflate-install-script/releases/download/1.0.1/install_libdeflate.sh"
 HTSLIB_SCRIPT_URL="https://github.com/team113sanger/htslib-install-script/releases/download/1.0.3/install_htslib.sh"
-SAMTOOLS_SCRIPT_URL="https://github.com/team113sanger/samtools-install-script/releases/download/1.0.2/install_samtools.sh"
+SAMTOOLS_SCRIPT_URL="https://github.com/team113sanger/samtools-install-script/releases/download/1.0.3/install_samtools.sh"
 
 curl -sSL $LIBDEFLATE_SCRIPT_URL | bash -s -- $LIBDEFLATE_VERSION
 curl -sSL $HTSLIB_SCRIPT_URL | bash -s -- $HTSLIB_VERSION
@@ -78,14 +78,14 @@ For more information on how to install `libdeflate`, see the [libdeflate-install
 But in general, you can run the following commands to install libdeflate which will install to `/usr/local`:
 
 ```bash
-bash install_samtools.sh 1.16
+bash install_samtools.sh 1.22.1
 ```
 
 Or you can specify a different install location e.g. `/path/to/install`:
 ```bash
 DEST_DIR=/path/to/install
 
-bash install_samtools.sh 1.16 --install-dir $DEST_DIR
+bash install_samtools.sh 1.22.1 --install-dir $DEST_DIR
 
 export PATH=$DEST_DIR/bin:$PATH
 ```
