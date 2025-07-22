@@ -19,7 +19,7 @@ The script `install_samtools.sh` is a convenience script to install
 a suite of programs for interacting with high-throughput sequencing data.
 
 The script encapsulates the steps to download, configure, compile and install
-`samtools` to a specified location, for versions `1.10` to `1.22`. It does not install htslib (or tabix).
+`samtools` to a specified location, for versions `1.10` to `1.22.1`. It does not install htslib (or tabix).
 
 The script is tested via a private GitLab CICD against Ubuntu 22.04 and Debian
 bookworm with popular Docker images.
@@ -157,7 +157,7 @@ To build
 docker build -f docker/Dockerfile.ubuntu22.usr_local -t example:local .
 
 # or to build with a specific version
-VERSION=1.16
+VERSION=1.22.1
 docker build -f docker/Dockerfile.ubuntu22.usr_local --build-arg HTSLIB_VERSION=$VERSION -t example:local .
 
 ```
@@ -172,7 +172,7 @@ docker run -it --rm -v $(pwd):/opt/repo example:local bash
 
 To test
 ```bash
-VERSION=1.16
+VERSION=1.22.1
 docker run --rm example:local bash run_tests_samtools.sh $VERSION
 docker run --rm example:local bash run_tests_htslib.sh $VERSION
 ```
